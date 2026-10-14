@@ -1,4 +1,3 @@
-
 import streamlit as st
 import streamlit.components.v1 as components
 import networkx as nx
@@ -15,7 +14,7 @@ st.write("Explore functional protein associations related to idiopathic pulmonar
 # Proteins associated with fibrosis
 proteins = [
     "TGFB1", "COL1A1", "COL1A2", "ACTA2", "FN1",
-    "CTGF", "MMP2", "MMP9", "TIMP1", "SERPINE1",
+    "CCN2", "MMP2", "MMP9", "TIMP1", "SERPINE1",
     "SMAD2", "SMAD3", "SMAD4", "IL6", "TNF",
     "PDGFA", "PDGFB", "VIM", "SPP1", "CXCL8"
 ]
@@ -40,12 +39,23 @@ def load_network():
     for protein in proteins:
         G.add_node(protein)
 
+
     for interaction in data:
         source = interaction["preferredName_A"]
         target = interaction["preferredName_B"]
 
+        if source == "CTGF":
+            source = "CCN2"
+        if target == "CTGF":
+            target = "CCN2"
+
         if source in proteins and target in proteins:
-            G.add_edge(source, target, weight=interaction["score"])
+            G.add_edge(
+                source,
+                target,
+                weight=interaction["score"]
+            )
+
 
     return G
 
@@ -123,7 +133,7 @@ else:
         net.add_node(
             node,
             label=node,
-            size=10 + degree * 1.5,
+            size=7 + degree * 0.7,
             color=palette[community % len(palette)],
             title=f"Protein: {node}<br>Degree: {degree}<br>Community: {community + 1}"
         )
@@ -132,15 +142,23 @@ else:
         net.add_edge(
             source,
             target,
-            color="#CCCCCC",
+            color="rgba(160,160,160,0.22)", width=0.7,
             title=f"STRING score: {attributes['weight']:.3f}"
         )
 
+    
     # Compute actual positions for each layout
     if layout == "Circular":
-        positions = nx.circular_layout(H, scale=350)
+        positions = nx.circular_layout(H, scale=450)
     else:
-        positions = nx.spring_layout(H, seed=42, scale=350)
+        positions = nx.spring_layout(
+            H,
+            seed=42,
+            k=1.8,
+            iterations=300,
+            scale=450
+        )
+
 
     for node in net.nodes:
         node_id = node["id"]
